@@ -22,31 +22,33 @@ int main(void) {
     while (1)
     {
         // On button sw1 press, increments value
-        if (!(PIND & (1 << PIND2)) && value < 15)
+        if (!(PIND & (1 << PIND2)) && value < 15) {
             value++;
+            // Empty loop to increment the counter only once per press
+            while (!(PIND & (1 << PIND2))) { }
+        }
         // On button sw2 press, increments value
-        else if (!(PIND & (1 << PIND4)) && value != 0)
+        else if (!(PIND & (1 << PIND4)) && value != 0) {
             value--;
+            while (!(PIND & (1 << PIND4))) { }
+        }
         
-        if (value / 8 == 1) // if there is one time eight, we turn on the first light
-            PORTB &= ~(1 <<PORTB4);
-        else
-            PORTB |= (1 <<PORTB4);
-        if (value % 2 != 0) // Odd number -> turn on first led by changing if led is active high or low
-            PORTB &= ~(1 << PORTB0);
-        else
+        if (value & 1)
             PORTB |= (1 << PORTB0);
-
-        if (value % 2 == 0) // Divisible by 0 -> we turn on the 2 led
-            PORTB &= ~(1 <<PORTB1);
         else
+            PORTB &= ~(1 << PORTB0);
+        if (value & 2)
             PORTB |= (1 <<PORTB1);
-
-        if (value % 4 == 0) // Disisible by 4 -> we turn on the 4 led
-            PORTB &= ~(1 <<PORTB2);
         else
+            PORTB &= ~(1 <<PORTB1);
+        if (value & 4)
             PORTB |= (1 <<PORTB2);
-
+        else
+            PORTB &= ~(1 <<PORTB2);
+        if (value & 8)
+            PORTB |= (1 <<PORTB4);
+        else
+            PORTB &= ~(1 <<PORTB4);
      
         
         _delay_ms(20);
