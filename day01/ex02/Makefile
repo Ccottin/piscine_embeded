@@ -6,7 +6,7 @@ AVRDUDE		:= avrdude
 
 F_CPU		:= 16000000UL
 CFLAGS		:= -mmcu=atmega328p -DF_CPU=$(F_CPU)
-FFLAGS		:= -c arduino -p m328p -b 115200 -P /dev/ttyUSB0 
+FFLAGS		:= -c arduino -p m328p -b 115200 -P /dev/ttyUSB0
 
 SRC			:= main.c
 OBJ			:= $(patsubst %.c, %.bin, $(SRC))
