@@ -15,8 +15,8 @@ int main(void)
     TCCR1A |= (1 << WGM11);
     // setting the top value to be a second
     ICR1 = 62500;
-    // PWM value is time of activity * percentage / 100
-    OCR1A = 6250;
+    // PWM value is time of activity * percentage / 100 - 1
+    OCR1A = 6250 - 1;
     // Setting OC1A to set the led off when it goes over OCR1A, and on when its bottom
     TCCR1A |= (1 << COM1A1);
 

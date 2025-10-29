@@ -35,7 +35,7 @@ int main(void)
         if (!(PIND & (1 << PIND2)) && ratio < 10) {
             ratio++;
             // PWM value is time of activity * percentage / 100 
-            OCR1A = (RATE * ratio) / 10; 
+            OCR1A = ((RATE * ratio) / 10) - 1; 
             // Empty loop to increment the counter only once per press
             while (!(PIND & (1 << PIND2))) { }
         }
@@ -43,7 +43,7 @@ int main(void)
         else if (!(PIND & (1 << PIND4)) && ratio > 1) {
             ratio--;
             // PWM value is time of activity * percentage / 100 
-            OCR1A = (RATE * ratio) / 10; 
+            OCR1A = ((RATE * ratio) / 10) - 1; 
             while (!(PIND & (1 << PIND4))) { }
         }
         // debounce

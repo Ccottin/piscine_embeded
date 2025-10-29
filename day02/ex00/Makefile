@@ -5,6 +5,8 @@ OBJ_COPY	:= avr-objcopy
 AVRDUDE		:= avrdude
 
 F_CPU		:= 16000000UL
+BAUDRATE	:= 115200
+
 CFLAGS		:= -mmcu=atmega328p -DF_CPU=$(F_CPU) -Os
 FFLAGS		:= -c arduino -p m328p -b 115200 -P /dev/ttyUSB0
 
