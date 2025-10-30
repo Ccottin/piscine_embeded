@@ -126,7 +126,7 @@ void    approuved(void)
         PORTB &= ~((1 << PORTB4));
         _delay_ms(100);
     }
-    PORTB &= ~((1 << PORTD3) | (1 << PORTD5));
+    PORTD &= ~((1 << PORTD3) | (1 << PORTD4));
 }
 
 void    reject(void) {
