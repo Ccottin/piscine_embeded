@@ -53,17 +53,20 @@ uint8_t blue_is_set(void) {
 void    set_duty_cycle_red(uint8_t total_time, uint8_t percentage) {
     if (percentage > 100)
         percentage = 100;
+    // Timer solded to red led
     OCR0B = (total_time * (percentage / 10)) / 10;
 }
 
 void    set_duty_cycle_green(uint8_t total_time, uint8_t percentage) {
     if (percentage > 100)
         percentage = 100;
+    // Timer solded to green led
     OCR0A = (total_time * (percentage / 10)) / 10;
 }
 
 void    set_duty_cycle_blue(uint8_t total_time, uint8_t percentage) {
     if (percentage > 100)
         percentage = 100;
+    // Timer solded to blue led
     OCR2B = (total_time * (percentage / 10)) / 10;
 }

@@ -1,29 +1,24 @@
 #include "header.h"
 
+# define CYCLE 62500
+
 void    setup(void)
 {
     // rgb led as output
     DDRD |= (1 << DDD5) | (1 << DDD6) | (1 << DDD3);
-    // DDRB = 0x01;
 }
 
 void init_rgb(void)
 {
     // Setting fast PWM timer 0
     TCCR0A |= (1 << WGM01) | (1 << WGM00);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR0B |= (1 << CS00);
-    // TCCR0B |= (1 << WGM02) | (1 << CS00);
     
     // Setting fast PWM timer 2
     TCCR2A |= (1 << WGM21) | (1 << WGM20);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR2B |= (1 << CS20);
-
-    // cutting the duty cycle, so we won't become blind during this execrice (:
-    set_duty_cycle_red(255, 30);
-    set_duty_cycle_green(255, 30);
-    set_duty_cycle_blue(255, 30);
 
     turn_blue_pwm_on();
     turn_green_pwm_on();
@@ -36,7 +31,7 @@ void set_rgb(uint8_t r, uint8_t g, uint8_t b)
     set_duty_cycle_green(g, 30);
     set_duty_cycle_blue(b, 30);
     
-    // They both work, but the upper solution doesnt make you blind (:
+    // They both work, but the upper solution keep your eyes safe (:
 
     // set_duty_cycle_red(255, r);
     // set_duty_cycle_green(255, g);
@@ -66,7 +61,7 @@ int main(void)
     i = 0;
     while (42) {
         wheel(i);
-        _delay_ms(50);
+        _delay_ms(77);
         ++i;
     }
 }                                                                                                        

@@ -1,6 +1,7 @@
 #ifndef LIB_LED_H
 # define LIB_LED_H
 
+/* using lib led will take over timer2 and timer0 */
 # include <avr/io.h>
 # include <util/delay.h>
 # include <avr/interrupt.h>
@@ -21,6 +22,8 @@ uint8_t blue_is_set(void);
 void    set_duty_cycle_red(uint8_t total_time, uint8_t percentage);
 void    set_duty_cycle_green(uint8_t total_time, uint8_t percentage);
 void    set_duty_cycle_blue(uint8_t total_time, uint8_t percentage);
+
+void init_rgb(void);
 
 #endif
 

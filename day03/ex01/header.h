@@ -4,8 +4,6 @@
 # include <util/delay.h>
 # include <avr/interrupt.h>
 
-# define CYCLE 62500
-
 void    turn_red_pwm_on(void);
 void    turn_red_pwm_off(void);
 void    turn_green_pwm_on(void);

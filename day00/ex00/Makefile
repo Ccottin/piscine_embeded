@@ -22,6 +22,7 @@ hex :
 
 flash : $(HEX)
 	$(AVRDUDE) $(FFLAGS) -U flash:w:$< -P /dev/ttyUSB0
+	$(AVRDUDE) $(FFLAGS) -U flash:w:$< -P /dev/ttyUSB1
 
 clean :
 	rm -rf main.hex main.bin

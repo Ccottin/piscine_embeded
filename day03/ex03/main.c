@@ -33,16 +33,16 @@ void init_rgb(void)
 // tres sale mais temps limitey
 uint8_t hexa_to_integer(char first, char second) {
     if (first >= 'A' && first <= 'F') {
-        second -= 65; // - 65 + 10
+        second -= 55; // - 65 + 10
     } else if (first >= 'a' && first <= 'f') {
-        first -= 97; // - 97 + 10
+        first -= 87; // - 97 + 10
     } else if (first >= '0' && first <= '9') {
         first -= 48;
     }
      if (second >= 'A' && second <= 'Z') {
         second -= 55; // - 65 ('A') + 10
     } else if (second >= 'a' && second <= 'z') {
-        second -= 97; // - 97 ('a') + 10
+        second -= 87; // - 97 ('a') + 10
     } else if (second >= '0' && second <= '9') {
         second -= 48;
     }
@@ -63,9 +63,9 @@ char    parse_color(char *color_code) {
         i++;
     if (i != 7)
         return (1);
-    set_duty_cycle_red(hexa_to_integer(color_code[1], color_code[2]), 50);
-    set_duty_cycle_green(hexa_to_integer(color_code[3], color_code[4]), 50);
-    set_duty_cycle_blue(hexa_to_integer(color_code[5], color_code[6]), 50);
+    set_duty_cycle_red(hexa_to_integer(color_code[1], color_code[2]), 30);
+    set_duty_cycle_green(hexa_to_integer(color_code[3], color_code[4]), 30);
+    set_duty_cycle_blue(hexa_to_integer(color_code[5], color_code[6]), 30);
     
     return (0);
 }
@@ -80,7 +80,7 @@ int main(void)
     while (42) {
         uart_getstr(color_code, 9);
         if (parse_color(color_code))
-            uart_printstr("Invalid color code.\r\n");
+            uart_printstr(" X Invalid color code.\r\n");
         else
             uart_printstr(" -> Done.\r\n");
     }

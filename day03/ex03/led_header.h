@@ -1,5 +1,5 @@
-#ifndef HEADER_H
-# define HEADER_H
+#ifndef LED_HEADER_H
+# define LED_HEADER_H
 # include <avr/io.h>
 # include <util/delay.h>
 # include <avr/interrupt.h>

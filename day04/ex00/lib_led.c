@@ -1,4 +1,4 @@
-#include "led_header.h"
+#include "lib_led.h"
 
 /*
 Red = PD5 -> OC0B
@@ -49,7 +49,7 @@ uint8_t blue_is_set(void) {
     return (TCCR2A & (1 << COM2B1));
 }
 
-/* no overflow (:  registers to access the duty cycle un pwm mode`*/
+/* no overflow (:  registers to access the duty cycle un pwm mode */
 void    set_duty_cycle_red(uint8_t total_time, uint8_t percentage) {
     if (percentage > 100)
         percentage = 100;
@@ -66,4 +66,28 @@ void    set_duty_cycle_blue(uint8_t total_time, uint8_t percentage) {
     if (percentage > 100)
         percentage = 100;
     OCR2B = (total_time * (percentage / 10)) / 10;
+}
+
+void init_rgb(void)
+{
+    // leds as output
+    DDRD |= (1 << DDD5) | (1 << DDD6) | (1 << DDD3);
+    // Setting fast PWM timer 0
+    TCCR0A |= (1 << WGM01) | (1 << WGM00);
+    // enable clock
+    TCCR0B |= (1 << CS00);
+    // TCCR0B |= (1 << WGM02) | (1 << CS00);
+    
+    // Setting fast PWM timer 2
+    TCCR2A |= (1 << WGM21) | (1 << WGM20);
+    // enable clock
+    TCCR2B |= (1 << CS20);
+
+    set_duty_cycle_red(0, 0);
+    set_duty_cycle_green(0, 0);
+    set_duty_cycle_blue(0, 0);
+    
+    turn_red_pwm_on();
+    turn_green_pwm_on();
+    turn_blue_pwm_on();
 }

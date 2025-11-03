@@ -1,8 +1,9 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include "lib_timer.h"
 
-volatile uint8_t is_pressed = 0;
+volatile uint8_t   interrupt_time = 0;
 
 void    setup(void) {
     // Led as output
@@ -14,22 +15,36 @@ void    setup(void) {
 }
 
 ISR(INT0_vect) {
-    // blink
-    is_pressed = 1;
-    // delay for debounce, it is not safe to put delay in interrupts when there is 
-    //more code, but since our only goal is to trigger the led this should be fine
+    cli();
+    // disable interrupt on button to prevent debounce
+    EICRA &= ~(1 << ISC01);
+    interrupt_time = time_counter;
+    // enable interrupts again to time counter increase
+    sei();
+    PORTB ^= 1 << PORTB4;
 }
 
 int main(void) {
+    
     setup();
+    milisecond_counter();
     // enable interrupt
-
     sei();
+    uint8_t current_time = 0;
+    
     while (42) {
-        if (is_pressed == 1) {
-            _delay_ms(200);
-            PORTB ^= (1 << PORTB0);
-            is_pressed = 0;
+        // wait for interrupt time update
+        while (current_time == interrupt_time) { }
+        PORTB ^= 1 << PORTB0;
+        // on overflow case, the operation stays valid as its cyclic
+        while (current_time - interrupt_time > 20) {
+            current_time = time_counter;
+            _delay_ms(2);
         }
-     }
+
+        cli();
+        // set flag to read next button input
+        EICRA |= (1 << ISC01);
+        sei();
+    }
 }

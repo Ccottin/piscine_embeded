@@ -1,23 +1,23 @@
 #include "header.h"
 
+# define CYCLE 62500
+
 void    setup(void)
 {
     // rgb led as output
     DDRD |= (1 << DDD5) | (1 << DDD6) | (1 << DDD3);
-    // DDRB = 0x01;
 }
 
 void    set_timer(void)
 {
     // Setting fast PWM timer 0
     TCCR0A |= (1 << WGM01) | (1 << WGM00);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR0B |= (1 << CS00);
-    // TCCR0B |= (1 << WGM02) | (1 << CS00);
     
     // Setting fast PWM timer 2
     TCCR2A |= (1 << WGM21) | (1 << WGM20);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR2B |= (1 << CS20);
 
     // cutting the duty cycle, so we won't become blind during this execrice (:
@@ -32,7 +32,7 @@ void    set_timer(void)
     TCCR1B |= (1 << WGM12);
     // setting OCR1A to be a second
     OCR1A = CYCLE;
-    // Enable interrupts when the flag OCIF1A is set, meaning a Compare A match has been done
+    // Enable interrupts when the flag OCIF1A is set, meaning a Compare A Match has been done
     TIMSK1 |= (1 << OCIE1A);
 }
 
@@ -46,7 +46,8 @@ ISR(TIMER1_COMPA_vect)
     else if (green_is_set()) {
         turn_green_pwm_off();
         turn_blue_pwm_on();
-    } else if (blue_is_set()) {
+    }
+    else if (blue_is_set()) {
         turn_blue_pwm_off();
         turn_red_pwm_on();
     }

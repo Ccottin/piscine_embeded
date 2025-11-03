@@ -1,24 +1,24 @@
 #include "header.h"
 
+# define CYCLE 62500
+
 static int  state;
 void    setup(void)
 {
     // rgb led as output
     DDRD |= (1 << DDD5) | (1 << DDD6) | (1 << DDD3);
-    // DDRB = 0x01;
 }
 
 void    set_timer(void)
 {
     // Setting fast PWM timer 0
     TCCR0A |= (1 << WGM01) | (1 << WGM00);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR0B |= (1 << CS00);
-    // TCCR0B |= (1 << WGM02) | (1 << CS00);
     
     // Setting fast PWM timer 2
     TCCR2A |= (1 << WGM21) | (1 << WGM20);
-    // Setting fast PWM timer 0 & enable clock
+    // Enable clock with no predivider
     TCCR2B |= (1 << CS20);
 
     // cutting the duty cycle, so we won't become blind during this execrice (:
