@@ -19,6 +19,8 @@ uint8_t red_is_set(void);
 uint8_t green_is_set(void);
 uint8_t blue_is_set(void);
 
+void    wheel(uint8_t pos);
+
 void    set_duty_cycle_red(uint8_t total_time, uint8_t percentage);
 void    set_duty_cycle_green(uint8_t total_time, uint8_t percentage);
 void    set_duty_cycle_blue(uint8_t total_time, uint8_t percentage);

@@ -2,49 +2,43 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include "lib_timer.h"
+#include "isr.h"
 
-volatile uint8_t   interrupt_time = 0;
+ volatile uint8_t   interrupt_time;
+ volatile uint8_t   button_pressed;
 
 void    setup(void) {
     // Led as output
     DDRB |= (1 << DDB0);
+    DDRB |= (1 << DDB4);
     // Setting flag for interrupt on int0, on port D, where sw1 is solded
     EIMSK |= (1 << INT0);
-    // Interrupt will be triggered on falling edge of the button, meaning when button is pressed
-    EICRA |= (1 << ISC01);
+    // Interrupt will be triggered as long as button is low
+    // With regs ISC01 and ISC00 in EICRA at 0
 }
 
-ISR(INT0_vect) {
-    cli();
-    // disable interrupt on button to prevent debounce
-    EICRA &= ~(1 << ISC01);
+FT_ISR(INT0_vect) {
+    if (button_pressed == 0) {
+            PORTB ^= 1 << PORTB0;
+    }
     interrupt_time = time_counter;
-    // enable interrupts again to time counter increase
-    sei();
-    PORTB ^= 1 << PORTB4;
+    button_pressed = 1;
 }
 
 int main(void) {
-    
     setup();
-    milisecond_counter();
-    // enable interrupt
     sei();
-    uint8_t current_time = 0;
+    milisecond_counter();
+    interrupt_time = 0;
+    button_pressed = 0;
     
+    static uint8_t current_time = 0;
     while (42) {
-        // wait for interrupt time update
-        while (current_time == interrupt_time) { }
-        PORTB ^= 1 << PORTB0;
-        // on overflow case, the operation stays valid as its cyclic
-        while (current_time - interrupt_time > 20) {
-            current_time = time_counter;
-            _delay_ms(2);
+        if (button_pressed) {
+            // wait debounce
+            while (time_counter - interrupt_time < 2) { }
+            button_pressed = 0;
+            sei();
         }
-
-        cli();
-        // set flag to read next button input
-        EICRA |= (1 << ISC01);
-        sei();
     }
 }

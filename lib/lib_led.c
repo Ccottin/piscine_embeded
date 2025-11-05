@@ -68,6 +68,30 @@ void    set_duty_cycle_blue(uint8_t total_time, uint8_t percentage) {
     OCR2B = (total_time * (percentage / 10)) / 10;
 }
 
+void set_rgb(uint8_t r, uint8_t g, uint8_t b)
+{
+    set_duty_cycle_red(r, 30);
+    set_duty_cycle_green(g, 30);
+    set_duty_cycle_blue(b, 30);
+}
+
+void wheel(uint8_t pos)
+{
+    pos = 255 - pos;
+    if (pos < 85) {
+    set_rgb(255 - pos * 3, 0, pos * 3);
+    }
+    else if (pos < 170) {
+    pos = pos - 85;
+    set_rgb(0, pos * 3, 255 - pos * 3);
+    }
+    else {
+    pos = pos - 170;
+    set_rgb(pos * 3, 255 - pos * 3, 0);
+    }
+}
+
+
 void init_rgb(void)
 {
     // leds as output

@@ -54,13 +54,3 @@ ISR(TIMER1_COMPA_vect)
 {
     uart_tx('Z');
 }
-
-
-int main(void)
-{
-    set_timer();
-    uart_init();
-    // Enable interrupts
-    sei();
-    while (42) { }
-}

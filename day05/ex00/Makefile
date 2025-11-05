@@ -12,26 +12,27 @@ FFLAGS		:= -c arduino -p m328p -b $(UART_BAUDRATE) -P /dev/ttyUSB0
 
 SRC			= $(wildcard *.c)
 OBJ			= $(SRC:.c=.bin)
-ELF			= $(NAME).elf
+BIN			= $(NAME).bin
 HEX			= $(NAME).hex
 
 $(NAME) : hex flash
 
 all : $(NAME)
 
+# rule for compiling
 %.bin: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # call obj var, that calls implicitly %.bin var
 hex : $(OBJ)
 #	linking files together
-	$(CC) $(CFLAGS) $(OBJ) -o $(ELF)
-	$(OBJ_COPY) -j .text -j .data -O ihex $(ELF) $(HEX)
+	$(CC) $(CFLAGS) $(OBJ) -o $(BIN)
+	$(OBJ_COPY) -j .text -j .data -O ihex $(BIN) $(HEX)
 
 flash : $(HEX)
 	$(AVRDUDE) $(FFLAGS) -U flash:w:$< 
 
 clean :
-	rm -rf $(HEX) $(ELF) $(OBJ)
+	rm -rf $(HEX) $(BIN) $(OBJ)
 
 .PHONY : all hex flash clean
