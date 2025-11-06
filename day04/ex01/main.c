@@ -2,7 +2,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#define TOP 62500
+#define TOP 1000
 
 void    setup_timer_0(void) {
     // predivider of 1024 -> should overflow 62 times per sec
@@ -19,10 +19,10 @@ void    setup_timer_0(void) {
 
 void    setup_timer_1(void) {
     // enable clock timer 1
-    TCCR1B |= 1 << CS12;
+    TCCR1B |= 1 << CS10;
     // enable fast pwm, top at ICR1, compare on OCR1A
     TCCR1B |= 1 << WGM12 | 1 << WGM13;
-    TCCR1A |= 1 << WGM10;
+    TCCR1A |= 1 << WGM11;
     // setting top value
     ICR1 = TOP;
     // clears OC1a at compare match, set at bottom
@@ -42,7 +42,10 @@ ISR(TIMER0_COMPA_vect) {
     static uint8_t  count = 0;
     static uint8_t  dir = 1;
 
-    OCR1A = (TOP * (dir / 10)) / 10;
+    // clearing interrupt flag
+    TIFR0 &= ~(1 << OCF0A);
+    // define new comapare on match value
+    OCR1A = (TOP * (count / 10)) / 10;
 
     if (count == 100 || count == 0) {
         dir = !dir;

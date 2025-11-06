@@ -129,7 +129,6 @@ char    uart_rx(void)
      return (UDR0);
 }
 
-// si usee, a retester cest pitetre casseeeeeeee
 char    ft_strcmp(char *s1, char *s2)
 {
     int i;
