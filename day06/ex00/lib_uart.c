@@ -101,7 +101,7 @@ void    uart_printnbr_hex_8bits(uint8_t nb)
     uart_printstr(str);
 }
 
-void    uart_printnbr_hex_16bits(uint8_t nb)
+void    uart_printnbr_hex_16bits(uint16_t nb)
 {
     uint8_t str[5] = {0, 0, 0, 0, 0};
     uint8_t i = get_number_size_hex(nb);
@@ -129,7 +129,6 @@ char    uart_rx(void)
      return (UDR0);
 }
 
-// si usee, a retester cest pitetre casseeeeeeee
 char    ft_strcmp(char *s1, char *s2)
 {
     int i;

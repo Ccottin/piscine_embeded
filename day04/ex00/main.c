@@ -37,11 +37,8 @@ int main(void) {
     static uint8_t current_time = 0;
     while (42) {
         if (button_pressed) {
-            cli();
-            // wait debounce
-            while (time_counter - interrupt_time < 2) { }
+            while (time_counter - interrupt_time < 20) { }
             button_pressed = 0;
-            sei();
         }
     }
 }
