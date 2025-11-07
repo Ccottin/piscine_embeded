@@ -4,7 +4,7 @@ CC			:= avr-gcc
 OBJ_COPY	:= avr-objcopy
 AVRDUDE		:= avrdude
 
-F_CPU		:= 16000000UL
+F_CPU		:= 16000000
 UART_BAUDRATE	:= 115200
 
 CFLAGS		:= -mmcu=atmega328p -DF_CPU=$(F_CPU) -DUART_BAUDRATE=$(UART_BAUDRATE) -Os

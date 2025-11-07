@@ -2,7 +2,6 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include "isr.h"
-#include "lib_uart.h"
 
 static volatile uint8_t   val;
 

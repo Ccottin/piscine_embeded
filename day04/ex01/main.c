@@ -9,7 +9,7 @@ void    setup_timer_0(void) {
     TCCR0B |= 1 << CS02 | 1 << CS00;
     // Clear Timer on compare
     TCCR0A |= 1 << WGM01;
-    // should send 200 interrupts per seconds
+    // top at 78 should send 200 interrupts per seconds
     OCR0A = 78;
     // Setting interrupt on compare match A
     TIMSK0 |= 1 << OCIE0A;

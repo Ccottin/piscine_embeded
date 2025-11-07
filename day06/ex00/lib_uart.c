@@ -80,6 +80,18 @@ void    uart_printnbr_16bits(uint16_t nb)
     uart_printstr(str);
 }
 
+void    uart_printnbr_32bits(uint32_t nb)
+{
+    uint8_t str[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint8_t i = get_number_size_dec(nb);
+    while (nb > 9) {
+        str[i--] = ((nb % 10) + 48);
+        nb = nb / 10;
+    }
+    str[i] = (uint8_t)(nb + 48);
+    uart_printstr(str);
+}
+
 void    uart_printnbr_hex_8bits(uint8_t nb)
 {
     uint8_t str[3] = {0, 0, 0};
