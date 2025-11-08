@@ -1,9 +1,9 @@
 #include "lib_i2c.h"
-#include "lib_uart.h"
 #include <util/delay.h>
 #include <stdlib.h>
+#include <avr/interrupt.h>
 
-volatile uint8_t     status;
+volatile uint8_t time_counter;
 
 /*  
     all doc about thermosensor is in 
@@ -17,6 +17,8 @@ void    calibrate_Aht20(void) {
     // Part 5.1 of doc : wait at top 20ms for sensor to be in idle state
     // also states to wait 40 ms after device power on before sending data so we'll wait 40
     _delay_ms(40);
+    // maybe we can remove it
+
     i2c_start();
     // initiate transaction as sender
     i2c_send_adr_as_sender(AHT20_ADR);
@@ -44,6 +46,13 @@ void    calibrate_Aht20(void) {
     }
 }
 
+
+
+void    display_value(uint8_t decimal, uint8_t virgule) {
+    // i2c_print_digits(I2C_EXPANDER_ADDR, decimal / 10, decimal % 10, virgule / 10, virgule % 10);
+
+}
+
 void    convert_values(uint8_t *data) {
     float   temp;
     float   humidity;
@@ -67,15 +76,7 @@ void    convert_values(uint8_t *data) {
     uint8_t temp_dec = (uint8_t)temp;
     uint8_t temp_vir = (uint8_t)((humidity - temp_dec) * 100);
 
-    uart_printstr("Humidity = ");
-    uart_printnbr_8bits(humidity_dec);
-    uart_tx('.');
-    uart_printnbr_8bits(humidity_vir);
-    uart_printstr("\r\nTemp = ");
-    uart_printnbr_8bits(temp_dec);
-    uart_tx('.');
-    uart_printnbr_8bits(temp_vir);
-    uart_printstr("\r\n");
+    display_value(temp_dec, temp_vir);
 }
 
 /* This function will follow steps described in 5.4.3 and 5.4.4.
@@ -108,25 +109,37 @@ void    get_sensor_data(void) {
     i2c_multiread(data_byte, 6);
     // get the last one, but this time send no ack in exchange
     data_byte[6] = i2c_read_and_return_nack();
+    i2c_stop();
     // if we got time, do a check CRC to make sure the value is read
     // properly, is not just keep previous value
-    // debug purpose =
-    // for (int i = 0 ; i < 7; i++) {
-    //     uart_printnbr_hex_8bits(data_byte[i]);
-    //     uart_tx(' ');
-    // }
     convert_values(data_byte);
+    
 }
 
-int     main(void) {
-    uart_init();
+
+void    sensor_i2c_temp_celsius(void) {
+    set_timer1_sensor();
+    init_timer1();
+
+    sei();
 
     i2c_init();
     calibrate_Aht20();
+    
+    get_sensor_data();
+    set_timer1_wait();
+
     while (42) {
-        get_sensor_data();
         // 2.4. demands to read data every 2 secs
-        _delay_ms(2000);
+        if (time_counter == 2)
+        {
+            set_timer1_sensor();
+            get_sensor_data();
+            set_timer1_wait();      
+        }
     }
-    i2c_stop();
+}
+
+int main(void) {
+    sensor_i2c_temp_celsius();
 }
