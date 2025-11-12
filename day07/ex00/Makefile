@@ -17,7 +17,7 @@ HEX			= $(NAME).hex
 
 $(NAME) : hex flash
 
-all : $(NAME) show
+all : $(NAME)
 
 # rule for compiling
 %.bin: %.c
@@ -35,7 +35,7 @@ flash : $(HEX)
 clean :
 	rm -rf $(HEX) $(BIN) $(OBJ)
 
-show :
+show : all
 	screen /dev/ttyUSB0 115200
 
 re : clean all

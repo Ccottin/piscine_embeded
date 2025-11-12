@@ -27,8 +27,11 @@ void    uart_printstr(const char* str)
     i = 0;
     // just a loop to send char by char (:
     while(str[i] != 0)
-    { 
-        uart_tx(str[i]);
+    {
+        if ((unsigned char)str[i] > 127)
+            uart_tx('.');
+        else
+            uart_tx(str[i]);
         ++i;
     }
 }
@@ -180,6 +183,22 @@ uint8_t    ft_strcmp(uint8_t *s1, uint8_t *s2)
     return (0);
 }
 
+uint8_t    ft_strncmp(uint8_t *s1, uint8_t *s2, uint8_t size)
+{
+    int i;
+
+    i = 0;
+    while (s1[i] && s2[i] && i < size)
+    {
+        if (s1[i] == s2[i])
+            ++i;
+        else
+            return (0);
+    }
+    return (1);
+}
+
+
 void    uart_getstr(uint8_t* str)
 {
     int     i;
@@ -200,19 +219,38 @@ void    uart_getstr(uint8_t* str)
                 uart_tx(8);     // backspace to move cursor back
             }
         }
-        else if ( (i < 8 || (i > 8 && i < 11)) &&   // only hex charac in thoses positions
+        else if ( i <= 72 &&  // Input size should be smaller then 32
                     // Checking no unexpected char are putted
-                    ((c >= '0' && c <= '9') ||  \
-                    (c >= 'a' && c <= 'f'))) {
+                    (c > 31 && c < 127)) {
             uart_tx(c);
-            str[i] = c;
-            ++i;
-        }
-        else if (i == 8 && c == ' ') {
-             uart_tx(c);
             str[i] = c;
             ++i;
         }
     }
     str[i] = 0;
+}
+
+
+uint8_t get_number_size_dec(uint16_t nb) {
+    uint8_t size = 0;
+
+    while (nb > 9) {
+        nb = nb / 10;
+        ++size;
+    }
+    // should start at index 0 anyway
+    return (size);
+}
+
+void    uart_printnbr_8bits(uint8_t nb)
+{
+    char str[4] = {0, 0, 0, 0};
+    uint8_t i = get_number_size_dec(nb);
+
+    while (nb > 9) {
+        str[i--] = ((nb % 10) + 48);
+        nb = nb / 10;
+    }
+    str[i] = nb + 48;
+    uart_printstr(str);
 }

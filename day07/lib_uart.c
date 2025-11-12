@@ -33,17 +33,6 @@ void    uart_printstr(const char* str)
     }
 }
 
-uint8_t get_number_size_dec(uint16_t nb) {
-    uint8_t size = 0;
-
-    while (nb > 9) {
-        nb = nb / 10;
-        ++size;
-    }
-    // should start at index 0 anyway
-    return (size);
-}
-
 uint8_t get_number_size_hex(uint16_t nb) {
         uint8_t size = 0;
 
@@ -55,46 +44,10 @@ uint8_t get_number_size_hex(uint16_t nb) {
     return (size);
 }
 
-void    uart_printnbr_8bits(uint8_t nb)
-{
-    char str[4] = {0, 0, 0, 0};
-    uint8_t i = get_number_size_dec(nb);
-
-    while (nb > 9) {
-        str[i--] = ((nb % 10) + 48);
-        nb = nb / 10;
-    }
-    str[i] = nb + 48;
-    uart_printstr(str);
-}
-
-void    uart_printnbr_16bits(uint16_t nb)
-{
-    char str[6] = {0, 0, 0, 0, 0, 0};
-    uint8_t i = get_number_size_dec(nb);
-    while (nb > 9) {
-        str[i--] = ((nb % 10) + 48);
-        nb = nb / 10;
-    }
-    str[i] = (uint8_t)(nb + 48);
-    uart_printstr(str);
-}
-
-void    uart_printnbr_32bits(uint32_t nb)
-{
-    char str[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    uint8_t i = get_number_size_dec(nb);
-    while (nb > 9) {
-        str[i--] = ((nb % 10) + 48);
-        nb = nb / 10;
-    }
-    str[i] = (uint8_t)(nb + 48);
-    uart_printstr(str);
-}
-
 void    uart_printnbr_hex_8bits(uint8_t nb)
 {
-    char str[3] = {0, 0, 0};
+    // everybody should be displayed 🥳
+    char str[3] = {48, 48, 0};
     uint8_t i = get_number_size_hex(nb);
     uint8_t c;
 
@@ -111,11 +64,56 @@ void    uart_printnbr_hex_8bits(uint8_t nb)
         else
             str[i] = nb + 87;
     uart_printstr(str);
+}
+
+uint8_t    ascii_to_hex_8bit(uint8_t *str) {
+    uint8_t ret;
+    uint8_t i;
+
+    ret = 0;
+    i = 0;
+    while (str[i] && str[i + 1]) {
+        if (str[i] >= '0' && str[i] <= '9')
+            ret = (ret + (str[i] - 48)) * 16;  
+        else
+            ret = (ret + (str[i] - 87)) * 16;
+        ++i;
+    }
+    if (str[i] && (str[i] >= '0' && str[i] <= '9'))
+        ret = ret + (str[i] - 48);  
+    else if (str[i])
+        ret = ret + (str[i] - 87);
+
+    return (ret);
+}
+
+// I might become super lazy
+uint16_t    ascii_to_hex_16bit(uint8_t *str) {
+    uint16_t ret;
+    uint8_t i;
+
+    ret = 0;
+    i = 0;
+    while (str[i] && str[i + 1]) {
+        if (str[i] >= '0' && str[i] <= '9')
+            ret = (ret + (str[i] - 48)) * 16;  
+        else
+            ret = (ret + (str[i] - 87)) * 16;
+        ++i;
+    }
+    if (str[i] && (str[i] >= '0' && str[i] <= '9'))
+        ret = ret + (str[i] - 48);  
+    else if (str[i])
+        ret = ret + (str[i] - 87);
+
+    return (ret);
+
 }
 
 void    uart_printnbr_hex_16bits(uint16_t nb)
 {
-    char str[5] = {0, 0, 0, 0, 0};
+    // everybody should be displayed 🥳
+    char str[5] = {48, 48, 48, 48, 0};
     uint8_t i = get_number_size_hex(nb);
     uint8_t c;
 
@@ -134,18 +132,20 @@ void    uart_printnbr_hex_16bits(uint16_t nb)
     uart_printstr(str);
 }
 
-void    uart_printnbr_hex_32bits(uint32_t nb)
+
+void    uart_print_eeprom_address(uint16_t nb)
 {
-    char str[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    uint8_t i = get_number_size_hex(nb);
+    // fill the entire string (except the last 0) with char 0, so it will be displayed in hexdump
+    char str[9] = {48, 48, 48, 48, 48, 48, 48, 48, 0};
+    uint8_t i = 7; // starts from the end of string
     uint8_t c;
 
     while (nb > 15) {
         c = nb % 16;
         if (c < 10)
-            str[i--] = c + 48;
+            str[i++] = c + 48;
         else
-            str[i--] = c + 87;
+            str[i++] = c + 87;
         nb = nb / 16;
     }
     if (nb < 10)
@@ -154,6 +154,7 @@ void    uart_printnbr_hex_32bits(uint32_t nb)
             str[i] = nb + 87;
     uart_printstr(str);
 }
+
 
 char    uart_rx(void)
 {
@@ -162,7 +163,7 @@ char    uart_rx(void)
      return (UDR0);
 }
 
-char    ft_strcmp(char *s1, char *s2)
+uint8_t    ft_strcmp(uint8_t *s1, uint8_t *s2)
 {
     int i;
 
@@ -199,7 +200,11 @@ void    uart_getstr(uint8_t* str)
                 uart_tx(8);     // backspace to move cursor back
             }
         }
-        else if (c > 32 && c < 126) {
+        else if ( i <= 32 &&                        // Input size should be smaller then 32
+                    // Checking no unexpected char are putted
+                    ((c >= '0' && c <= '9') ||\
+                    (c >= 'a' && c <= 'f') || \
+                    ( c == ' '))) {
             uart_tx(c);
             str[i] = c;
             ++i;

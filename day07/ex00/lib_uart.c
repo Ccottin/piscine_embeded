@@ -91,15 +91,15 @@ void    uart_print_eeprom_address(uint16_t nb)
 {
     // fill the entire string (except the last 0) with char 0, so it will be displayed in hexdump
     char str[9] = {48, 48, 48, 48, 48, 48, 48, 48, 0};
-    uint8_t i = 6 - get_number_size_hex(nb); // starts from the end of string
+    uint8_t i = 7; // starts from the end of string
     uint8_t c;
 
     while (nb > 15) {
         c = nb % 16;
         if (c < 10)
-            str[i++] = c + 48;
+            str[i--] = c + 48;
         else
-            str[i++] = c + 87;
+            str[i--] = c + 87;
         nb = nb / 16;
     }
     if (nb < 10)
