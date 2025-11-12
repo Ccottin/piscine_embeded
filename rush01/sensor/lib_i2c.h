@@ -6,15 +6,8 @@
 
 # define I2C_FREQ 100000
 # define I2C_PRESQVAL 1
+#include "lib_uart.h"
 
-// commands of termocensor definitions
-# define AHT20_INIT 0xBE
-# define AHT20_SOFTRST 0xBA
-# define AHT20_STATUS 0x71
-# define AHT20_ADR 0x38
-/* Both of next commands are described in part 5.4 of doc */
-# define AHT20_CALIBR (uint8_t[]) {0xBE, 0x08, 0x00}
-# define AHT20_DATA (uint8_t[]) {0xAC, 0x33, 0x00}
 
 
 // in volatile in case at some point we'll need this in an interrupt

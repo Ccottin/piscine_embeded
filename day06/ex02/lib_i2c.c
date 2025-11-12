@@ -74,6 +74,12 @@ void    i2c_send_adr_as_sender(uint8_t rec_adr) {
     i2c_write(rec_adr << 1);
 }
 
+void    uart_write_status(void) {
+    uart_printstr("status: ");
+    uart_printnbr_hex_8bits(status);
+    uart_printstr("\r\n");
+}
+
 void    i2c_send_adr_as_receiver(uint8_t rec_adr) {
     i2c_write(rec_adr << 1 | 0x01);
 }
@@ -107,13 +113,3 @@ void    i2c_multiread(uint8_t *data, uint8_t size) {
         data[i] = i2c_read_and_return();
     }
 }
-
-// void    i2c_print_status(void) {
-//     uart_printstr("status = ");
-//     uart_printnbr_hex_8bits(status);
-//     uart_printstr("\r\n");
-// }
-
-// void    print_hex_value(char c) {
-
-// }

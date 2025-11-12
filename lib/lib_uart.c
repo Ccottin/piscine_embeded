@@ -3,7 +3,7 @@
 void    uart_init(void)
 {
     // Configuring the baud rate of UART connection
-    UBRR0H = (unsigned char)(BAUD_PRESCALLER >> 8);
+    UBRR0H = (unsigned char)((BAUD_PRESCALLER) >> 8);
     UBRR0L = (unsigned char)(BAUD_PRESCALLER);
     // Enable Transmitter & Receiver.
     UCSR0B |= (1 << TXEN0) | (1 << RXEN0);
@@ -57,7 +57,7 @@ uint8_t get_number_size_hex(uint16_t nb) {
 
 void    uart_printnbr_8bits(uint8_t nb)
 {
-    uint8_t str[4] = {0, 0, 0, 0};
+    char str[4] = {0, 0, 0, 0};
     uint8_t i = get_number_size_dec(nb);
 
     while (nb > 9) {
@@ -70,7 +70,19 @@ void    uart_printnbr_8bits(uint8_t nb)
 
 void    uart_printnbr_16bits(uint16_t nb)
 {
-    uint8_t str[6] = {0, 0, 0, 0, 0, 0};
+    char str[6] = {0, 0, 0, 0, 0, 0};
+    uint8_t i = get_number_size_dec(nb);
+    while (nb > 9) {
+        str[i--] = ((nb % 10) + 48);
+        nb = nb / 10;
+    }
+    str[i] = (uint8_t)(nb + 48);
+    uart_printstr(str);
+}
+
+void    uart_printnbr_32bits(uint32_t nb)
+{
+    char str[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     uint8_t i = get_number_size_dec(nb);
     while (nb > 9) {
         str[i--] = ((nb % 10) + 48);
@@ -82,7 +94,7 @@ void    uart_printnbr_16bits(uint16_t nb)
 
 void    uart_printnbr_hex_8bits(uint8_t nb)
 {
-    uint8_t str[3] = {0, 0, 0};
+    char str[3] = {0, 0, 0};
     uint8_t i = get_number_size_hex(nb);
     uint8_t c;
 
@@ -103,7 +115,28 @@ void    uart_printnbr_hex_8bits(uint8_t nb)
 
 void    uart_printnbr_hex_16bits(uint16_t nb)
 {
-    uint8_t str[5] = {0, 0, 0, 0, 0};
+    char str[5] = {0, 0, 0, 0, 0};
+    uint8_t i = get_number_size_hex(nb);
+    uint8_t c;
+
+    while (nb > 15) {
+        c = nb % 16;
+        if (c < 10)
+            str[i--] = c + 48;
+        else
+            str[i--] = c + 87;
+        nb = nb / 16;
+    }
+    if (nb < 10)
+            str[i] = nb + 48;
+        else
+            str[i] = nb + 87;
+    uart_printstr(str);
+}
+
+void    uart_printnbr_hex_32bits(uint32_t nb)
+{
+    char str[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     uint8_t i = get_number_size_hex(nb);
     uint8_t c;
 
@@ -172,4 +205,25 @@ void    uart_getstr(char* str, char size)
         }
     }
     str[i] = 0;
+}
+
+void    uart_printnbr_hex_8bits(uint8_t nb)
+{
+    char str[3] = {0, 0, 0};
+    uint8_t i = get_number_size_hex(nb);
+    uint8_t c;
+
+    while (nb > 15) {
+        c = nb % 16;
+        if (c < 10)
+            str[i--] = c + 48;
+        else
+            str[i--] = c + 87;
+        nb = nb / 16;
+    }
+    if (nb < 10)
+            str[i] = nb + 48;
+        else
+            str[i] = nb + 87;
+    uart_printstr(str);
 }

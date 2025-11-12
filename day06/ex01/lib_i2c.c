@@ -55,16 +55,6 @@ void    i2c_write(unsigned char data){
     status = 0b11111000 & TWSR;
 }
 
-void    i2c_read(void) {
-    // clearing interrupt, meaning receive/send buffer has been read
-    // adding TWEA to send an acknoledge bit afterwards
-    TWCR = 1 << TWINT | 1 << TWEA | 1 << TWEN;
-    // Wait for flag to be set
-    while ((TWCR & (1 << TWINT)) == 0) { }
-    // updating status by masking the 3 LSB that are used for something else 
-    status = 0b11111000 & TWSR;
-}
-
 /*************************************************************8 */
 
 // In order to initiate a transmission, the transmiter should send the receiver &-bits address
@@ -107,13 +97,3 @@ void    i2c_multiread(uint8_t *data, uint8_t size) {
         data[i] = i2c_read_and_return();
     }
 }
-
-// void    i2c_print_status(void) {
-//     uart_printstr("status = ");
-//     uart_printnbr_hex_8bits(status);
-//     uart_printstr("\r\n");
-// }
-
-// void    print_hex_value(char c) {
-
-// }

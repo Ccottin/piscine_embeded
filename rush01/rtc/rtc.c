@@ -1,0 +1,167 @@
+// #include "lib_i2c.h"
+
+// #define RTC_ADR 0xA2
+
+// #define SEC_REGISTER 0x02
+// #define MIN_REGISTER 0x03
+// #define HOUR_REGISTER 0x04
+// #define DAY_REGISTER 0x05
+// #define MONTH_REGISTER 0x07
+// #define YEAR_REGISTER 0x08
+
+// #define TIME_ARRAY_SIZE 7
+
+// /************** I2C function ********* */
+
+// void    i2c_multiwrite(uint8_t *data, uint8_t size) {
+//     for (int i = 0; i < size; i++) {
+//         i2c_write(data[i]);
+//     }
+// }
+
+// /************************************* */
+
+// uint8_t get_time_value(uint8_t register_adress) {
+//     uint8_t value;
+
+//     i2c_start();
+//     // write bit is already shifted in address of doc ::::)
+//     // i2c_send_adr_as_sender(RTC_ADR);
+//     i2c_write(RTC_ADR);
+//     // send register address (only 4 bytes of right will be read)
+//     i2c_write(register_adress);
+//     i2c_stop();
+
+//     i2c_start();
+//     // enter read mode
+//     i2c_write(RTC_ADR + 1);
+//     value = i2c_read_and_return_nack();
+//     i2c_stop();
+//      /*
+//         Datasheet of PCF8563 -> page 6, describe all registers and how
+//         time values are stored. Most of it is in BCD, meaning data is stored on two units of
+//         four bit : one will hold unit, the other one the ten. 0001 0001 is read 11, not 17.
+//         This website holds a great example : https://www.digital-detective.net/binary-coded-decimal-timestamps/
+//     */
+//     return (value);
+// }
+
+// // sec example : (((0xf0 & value) >> 4) * 10) + (0x0f & value)
+
+// uint8_t    mode_9(uint8_t setup) {
+//     uint8_t hour;
+//     uint8_t min;
+//     uint8_t value;
+
+//     value = get_time_value(HOUR_REGISTER);
+//     // accessing the right bits as described p.8
+//     hour = (((0b00110000 & value) >> 4) * 10) + (0x0f & value);
+//     value = get_time_value(MIN_REGISTER);
+//     // accessing the right bits as described p.8
+//     min = (((0b01110000 & value) >> 4) * 10) + (0x0f & value);
+
+//     return (setup);
+// }
+
+// uint8_t     mode_10(uint8_t setup) {
+//     uint8_t day;
+//     uint8_t month;
+//     uint8_t value;
+
+//     value = get_time_value(DAY_REGISTER);
+//     // accessing the right bits as described p.8
+//     day = (((0b00110000 & value) >> 4) * 10) + (0x0f & value);
+//     value = get_time_value(MONTH_REGISTER);
+//     // accessing the right bits as described p.9
+//     month = (((0b00010000 & value) >> 4) * 10) + (0x0f & value);
+
+//     return (setup);
+// }
+
+// uint8_t     mode_11(uint8_t setup) {
+//     uint8_t year;
+//     uint8_t century;
+//     uint8_t value;
+
+//     value = get_time_value(YEAR_REGISTER);
+//     // accessing the right bits as described p.9
+//     year = (((0xf0 & value) >> 4) * 10) + (0x0f & value);
+//     // century flag is the first bit of month register (p.9)
+//     value = get_time_value(MONTH_REGISTER);
+//     century = value & (1 << 7);
+//     if (century)
+//         century = 20;
+//     else
+//         century = 19;
+
+//     return (setup);
+// }
+
+// void set_time_value(uint8_t *time_input, uint8_t start_address, uint8_t nb_bytes) {
+
+//     i2c_start();
+//     // write bit is already shifted in address of doc ::::)
+//     // i2c_send_adr_as_sender(RTC_ADR);
+//     i2c_write(RTC_ADR);
+//     // send register address (only 4 bytes of right will be read)
+//     i2c_write(start_address);
+//     i2c_multiwrite(time_input, nb_bytes);
+//     i2c_stop();
+// }
+
+// // check no value is too deresonably too big before setting the clock
+// // if time, cap days accordingly to months
+// uint8_t    format_is_valid(uint8_t *uart_input) {
+//     uint8_t max_values[TIME_ARRAY_SIZE] = {31, 12, 20, 99, 23, 59, 59};
+//     uint8_t min_values[TIME_ARRAY_SIZE] = {1, 1, 19, 0, 0, 0, 0};
+
+//     // input value should be contained between mx value and min value, otherwise its invalid
+//     for (uint8_t i = 0 ; i < TIME_ARRAY_SIZE; i++) {
+//         if ((uart_input[i] > max_values[i]) || (uart_input[i] < min_values[i]))
+//             return (0); 
+//     }
+//     return (1);
+// }
+
+// /* first page of man : built in word address reg is automatically
+//     incremented after each write or read
+//     Means -> from seconds to day, the memory is continuous, so we can just write to it
+//     */
+// void    rtc_set_time(uint8_t *uart_input) {
+//     uint8_t     time_input[TIME_ARRAY_SIZE - 1];
+
+//     // convert decimal to Binary Code Decimal and fill time_input, at the correct place before sending them to rtc registers
+//     // first three are easy, it is just the end of input reversed
+//     for (uint8_t i = 0 ; i < 3 ; i++)
+//         time_input[i] = ((uart_input[TIME_ARRAY_SIZE - i - 1] / 10) << 4) + (0x0f & (uart_input[TIME_ARRAY_SIZE - i - 1] % 10));
+//     // day at beginning of input
+//     time_input[3] = ((uart_input[0] / 10) << 4) + ((0x0f & uart_input[0] % 10));
+//     // month os second char of input
+//     time_input[4] = ((uart_input[1] / 10) << 4) + ((0x0f & uart_input[1] % 10));
+//     // if century is 20, flag a the first bit of month reg should be set
+//     if (uart_input[2] == 20)
+//         time_input[4] |= 0b10000000;
+//     // years from 0 to 99 are at 5 pos of input
+//     time_input[5] = ((uart_input[3] / 10) << 4) +((0x0f & uart_input[3] % 10));
+
+//     set_time_value(time_input, SEC_REGISTER, 4);
+//     set_time_value(&(time_input[4]), MONTH_REGISTER, 2);
+// }
+
+
+// /*********************Bulshit main for debug (:******************* */
+
+// int main(void) {
+//     uint8_t check[] = {31, 12, 19, 99, 23, 59, 40};
+
+//     i2c_init();
+//     while (42) {
+//         mode_9(0);
+//         mode_10(0);
+//         mode_11(0);
+//     if ((UCSR0A & (1 << RXC0)) && format_is_valid(check)) {
+//             rtc_set_time(check);
+//     }
+//         _delay_ms(1000);
+//     }
+// }

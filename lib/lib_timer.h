@@ -2,7 +2,6 @@
 # define LIB_TIMER_H
 
 # include <avr/io.h>
-# include <util/delay.h>
 # include <avr/interrupt.h>
 
 /* using lib timer will take over timer 1 */

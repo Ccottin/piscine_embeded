@@ -35,7 +35,7 @@ void    i2c_send_adr_as_receiver(uint8_t adr);
 uint8_t    i2c_read_and_return(void);
 uint8_t    i2c_read_and_return_nack();
 
-void    uart_write_status(void);
+void    i2c_write_status(void);
 void    i2c_multiwrite(uint8_t *data, uint8_t size);
 void    i2c_multiread(uint8_t *data, uint8_t size);
 

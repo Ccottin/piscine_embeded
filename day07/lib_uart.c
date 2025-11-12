@@ -179,17 +179,18 @@ char    ft_strcmp(char *s1, char *s2)
     return (0);
 }
 
-void    uart_getstr(char* str, char size)
+void    uart_getstr(uint8_t* str)
 {
     int     i;
     char    c;
 
     i = 0;
-      while (i < size) {
+    while (42) {
         c = uart_rx();
-        if (c == '\r') // char send by screen when enter is used
+        if (c == '\r') { // char send by screen when enter is used
             break;
-        else if (c == 127)
+        }
+        else if (c == 127)  // delete char command
         {
             if (i > 0) {
                 --i;
@@ -198,7 +199,7 @@ void    uart_getstr(char* str, char size)
                 uart_tx(8);     // backspace to move cursor back
             }
         }
-        else {
+        else if (c > 32 && c < 126) {
             uart_tx(c);
             str[i] = c;
             ++i;

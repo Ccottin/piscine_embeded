@@ -21,7 +21,7 @@ void    i2c_init(void) {
     // TWI Bit Rate register -> will generate the SCK clocks frequency
     TWBR = temp;
     // Enable TWI
-    TWCR |= 1 << TWEN;
+    TWCR = 1 << TWEN;
 }
 
 void    i2c_start(void) {
@@ -74,8 +74,9 @@ void    i2c_send_adr_as_sender(uint8_t rec_adr) {
     i2c_write(rec_adr << 1);
 }
 
-void    uart_write_status(void) {
-    uart_printstr("status = ");
+// discover status from p.228 to p.236
+void    i2c_write_status(void) {
+    uart_printstr("status: ");
     uart_printnbr_hex_8bits(status);
     uart_printstr("\r\n");
 }
@@ -104,17 +105,15 @@ uint8_t    i2c_read_and_return_nack() {
 
 void    i2c_multiwrite(uint8_t *data, uint8_t size) {
     for (int i = 0; i < size; i++) {
-        // uart_printnbr_hex_8bits(data[i]);
         i2c_write(data[i]);
-        // uart_write_status();
+        uart_write_status();
     }
 }
 
 void    i2c_multiread(uint8_t *data, uint8_t size) {
         for (int i = 0; i < size; i++) {
         data[i] = i2c_read_and_return();
-        // uart_write_status();
-        // uart_printnbr_hex_8bits(data[i]);
+        uart_write_status();
     }
 }
 

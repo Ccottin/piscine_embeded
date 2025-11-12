@@ -2,8 +2,6 @@
 # define LIB_UART_H
 
 # include <avr/io.h>
-# include <util/delay.h>
-# include <avr/interrupt.h>
 
 # define BAUD_PRESCALLER ((F_CPU / 16) + UART_BAUDRATE / 2) / UART_BAUDRATE - 1
 
@@ -16,7 +14,7 @@ char    ft_strcmp(char *s1, char *s2);
 
 void    uart_getstr(char* str, char size);
 
-void    uart_printstr(const char* str);
+void    uart_printstr(const char *str);
 void    uart_printnbr_8bits(uint8_t nb);
 void    uart_printnbr_16bits(uint16_t nb);
 void    uart_printnbr_32bits(uint32_t nb);

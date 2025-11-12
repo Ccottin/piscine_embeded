@@ -3,8 +3,8 @@
 void    uart_init(void)
 {
     // Configuring the baud rate of UART connection
-    UBRR0H = (unsigned char)(BAUD_PRESCALLER >> 8);
-    UBRR0L = (unsigned char)(BAUD_PRESCALLER);
+    UBRR0H = (unsigned char)((BAUD_PRESCALLER) >> 8);
+    UBRR0L = (unsigned char)((BAUD_PRESCALLER));
     // Enable Transmitter & Receiver.
     UCSR0B |= (1 << TXEN0) | (1 << RXEN0);
     // Setting up frame format.
@@ -20,7 +20,7 @@ void    uart_tx(char c)
  
 }
 
-void    uart_printstr(const char* str)
+void    uart_printstr(const unsigned char* str)
 {
     int i;
 
@@ -65,7 +65,7 @@ void    uart_printnbr_8bits(uint8_t nb)
         nb = nb / 10;
     }
     str[i] = nb + 48;
-    uart_printstr(str);
+    uart_printstr((unsigned char*)str);
 }
 
 void    uart_printnbr_16bits(uint16_t nb)
@@ -77,7 +77,7 @@ void    uart_printnbr_16bits(uint16_t nb)
         nb = nb / 10;
     }
     str[i] = (uint8_t)(nb + 48);
-    uart_printstr(str);
+    uart_printstr((unsigned char*)str);
 }
 
 void    uart_printnbr_hex_8bits(uint8_t nb)
@@ -98,7 +98,7 @@ void    uart_printnbr_hex_8bits(uint8_t nb)
             str[i] = nb + 48;
         else
             str[i] = nb + 87;
-    uart_printstr(str);
+    uart_printstr((unsigned char*)str);
 }
 
 void    uart_printnbr_hex_16bits(uint16_t nb)
@@ -119,7 +119,7 @@ void    uart_printnbr_hex_16bits(uint16_t nb)
             str[i] = nb + 48;
         else
             str[i] = nb + 87;
-    uart_printstr(str);
+    uart_printstr((unsigned char*)str);
 }
 
 char    uart_rx(void)

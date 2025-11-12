@@ -7,7 +7,7 @@ AVRDUDE		:= avrdude
 F_CPU		:= 16000000
 UART_BAUDRATE	:= 115200
 
-CFLAGS		:=  -Wall -Wextra -Werror -mmcu=atmega328p -DF_CPU=$(F_CPU) -DUART_BAUDRATE=$(UART_BAUDRATE) -Os
+CFLAGS		:= -Wall -Wextra -Werror -mmcu=atmega328p -DF_CPU=$(F_CPU) -DUART_BAUDRATE=$(UART_BAUDRATE) -Os
 FFLAGS		:= -c arduino -p m328p -b $(UART_BAUDRATE) -P /dev/ttyUSB0
 
 SRC			= $(wildcard *.c)

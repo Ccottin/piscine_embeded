@@ -10,6 +10,8 @@
 #define MONTH_REGISTER 0x07
 #define YEAR_REGISTER 0x08
 
+#define TIME_ARRAY_SIZE 7
+
 
 uint8_t get_time_value(uint8_t register_adress) {
     uint8_t value;
@@ -27,7 +29,7 @@ uint8_t get_time_value(uint8_t register_adress) {
     i2c_write(RTC_ADR + 1);
     value = i2c_read_and_return_nack();
     i2c_stop();
-     /* 
+     /*
         Datasheet of PCF8563 -> page 6, describe all registers and how
         time values are stored. Most of it is in BCD, meaning data is stored on two units of
         four bit : one will hold unit, the other one the ten. 0001 0001 is read 11, not 17.
@@ -49,13 +51,13 @@ uint8_t    mode_9(uint8_t setup) {
     value = get_time_value(MIN_REGISTER);
     // accessing the right bits as described p.8
     min = (((0b01110000 & value) >> 4) * 10) + (0x0f & value);
-    
+
     /**   Debug Purpose   ** */
-    
+
     uart_printnbr_8bits(hour);
-    uart_printstr(" : ");
+    uart_printstr((unsigned char*)" : ");
     uart_printnbr_8bits(min);
-    uart_printstr("    ");
+    uart_printstr((unsigned char*)"    ");
 
     /**   End Debug Purpose   ** */
 
@@ -73,13 +75,13 @@ uint8_t     mode_10(uint8_t setup) {
     value = get_time_value(MONTH_REGISTER);
     // accessing the right bits as described p.9
     month = (((0b00010000 & value) >> 4) * 10) + (0x0f & value);
-    
+
     /**   Debug Purpose   ** */
-    
+
     uart_printnbr_8bits(day);
-    uart_printstr(" / ");
+    uart_printstr((unsigned char*)" / ");
     uart_printnbr_8bits(month);
-    uart_printstr(" / ");
+    uart_printstr((unsigned char*)" / ");
 
     /**   End Debug Purpose   ** */
 
@@ -106,9 +108,9 @@ uint8_t     mode_11(uint8_t setup) {
 
     uart_printnbr_8bits(century);
     uart_printnbr_8bits(year);
-    
+
     /**   End Debug Purpose   ** */
-    
+
     return (setup);
 }
 
@@ -124,62 +126,61 @@ void set_time_value(uint8_t *time_input, uint8_t start_address, uint8_t nb_bytes
     i2c_stop();
 }
 
+// check no value is too deresonably too big before setting the clock
+// if time, cap days accordingly to months
+uint8_t    format_is_valid(uint8_t *uart_input) {
+    uint8_t max_values[TIME_ARRAY_SIZE] = {31, 12, 20, 99, 23, 59, 59};
+    uint8_t min_values[TIME_ARRAY_SIZE] = {1, 1, 19, 0, 0, 0, 0};
+
+    // input value should be contained between mx value and min value, otherwise its invalid
+    for (uint8_t i = 0 ; i < TIME_ARRAY_SIZE; i++) {
+        if ((uart_input[i] > max_values[i]) || (uart_input[i] < min_values[i]))
+            return (0); 
+    }
+    return (1);
+}
 
 /* first page of man : built in word address reg is automatically
-    incremented after each write or read 
-    Means -> from seconds to day, the memory is continuous, so we can just write to it 
+    incremented after each write or read
+    Means -> from seconds to day, the memory is continuous, so we can just write to it
     */
 void    rtc_set_time(uint8_t *uart_input) {
-    // to do -> a function to check if there is no invalid date/time
-    uint8_t check[] = {00, 23, 05, 01};
-    set_time_value(check, SEC_REGISTER, 4);
-    // todo -> propre, set month, year and century
+    uint8_t     time_input[TIME_ARRAY_SIZE - 1];
+
+    // convert decimal to Binary Code Decimal and fill time_input, at the correct place before sending them to rtc registers
+    // first three are easy, it is just the end of input reversed
+    for (uint8_t i = 0 ; i < 3 ; i++)
+        time_input[i] = ((uart_input[TIME_ARRAY_SIZE - i - 1] / 10) << 4) + (0x0f & (uart_input[TIME_ARRAY_SIZE - i - 1] % 10));
+    // day at beginning of input
+    time_input[3] = ((uart_input[0] / 10) << 4) + ((0x0f & uart_input[0] % 10));
+    // month os second char of input
+    time_input[4] = ((uart_input[1] / 10) << 4) + ((0x0f & uart_input[1] % 10));
+    // if century is 20, flag a the first bit of month reg should be set
+    if (uart_input[2] == 20)
+        time_input[4] |= 0b10000000;
+    // years from 0 to 99 are at 5 pos of input
+    time_input[5] = ((uart_input[3] / 10) << 4) +((0x0f & uart_input[3] % 10));
+
+    set_time_value(time_input, SEC_REGISTER, 4);
+    set_time_value(&(time_input[4]), MONTH_REGISTER, 2);
 }
 
-
-
-
-/***** functions to add to uart ******* */
-
-uint8_t    uart_rx_non_blocking(uint8_t *uart_input, uint8_t len) {
-    uint8_t c;
-
-    if ((UCSR0A & (1 << RXC0)))
-    {
-        c = UDR0;
-        // todo -> implementer parsing & error handling
-        // implementer backspace & enter
-        uart_input[len] = c;
-        uart_tx(c);
-        ++len;
-    }
-    return (len);
-}
 
 /**************************************** */
 
 int main(void) {
-    uint8_t value;
-    uint8_t uart_input[20];
-    uint8_t input_len = 0;
-
+    uint8_t check[] = {31, 01, 19, 45, 23, 59, 40};
     uart_init();
     i2c_init();
-    for (int i = 0 ; i < 20 ; i++)
-        uart_input[i] = 0;
+    uart_printstr((unsigned char*)"INIT");
     while (42) {
         mode_9(0);
         mode_10(0);
         mode_11(0);
-        uart_printstr("\r\n");
-        input_len = uart_rx_non_blocking(uart_input, input_len);
-        if (input_len == 20) { // minimal but sufficient for now
-            rtc_set_time(uart_input);
-            // beurk
-            for (int i = 0 ; i < 20 ; i++)
-                uart_input[i] = 0;
-            input_len = 0;
-        }
+        uart_printstr((unsigned char*)"\r\n");
+    if ((UCSR0A & (1 << RXC0)) && format_is_valid(check)) {
+            rtc_set_time(check);
+    }
         _delay_ms(1000);
     }
 }
