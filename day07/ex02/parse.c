@@ -7,7 +7,7 @@ uint8_t    parse_quote(uint8_t* input, uint8_t* output, uint8_t* i) {
     if (input[*i] != '"' || (input[*i] == '"' && input[(*i) + 1] == '"'))
         return (1);
     ++(*i);
-    while (input[*i] && input[*i] != '"' && *i < 31) {
+    while (input[*i] && input[*i] != '"' && *i < 33) {
         ++(*i);
     }
     if (input[*i] != '"')
@@ -23,17 +23,26 @@ uint8_t    parse_quote(uint8_t* input, uint8_t* output, uint8_t* i) {
 
 /***************** Print cmd ************************ */
 
-// todo = afficher char 0
 void    uart_printmemory(const char* str)
 {
     int i;
 
     i = 0;
-    // just a loop to send char by char (:
     while(i < 16)
     {
-        if ((unsigned char)str[i] > 127)
+        if ((unsigned char)str[i] == 0xcc)
+        {
+            uart_printstr(RED);
             uart_tx('.');
+            uart_printstr(REGULAR);
+        }
+        else if ((unsigned char)str[i] > 127)
+            uart_tx('.');
+        else if (str[i] == 0) {
+            uart_printstr(RED);
+            uart_tx('0');
+            uart_printstr(REGULAR);
+        }
         else
             uart_tx(str[i]);
         ++i;
@@ -79,29 +88,49 @@ void    print_cmd(void) {
     }
 }
 
-// also fix read command
-
 /***************** Forget cmd ************************ */
 
 void    forget_cmd(uint8_t* read_input) {
-    (void)read_input;
-}
-//     uint8_t     eeprom_data[1025];
-//     uint8_t     key[31];    //input size - quote size
-//     uint8_t i;
+    uint8_t     eeprom_data[1025];
+    uint8_t     key[33];    //input size - quote size
+    uint16_t i;
+    uint8_t j;
+    uint8_t     flag = 0;   // 0 == search for magic number ; 1 == compare key ; 2 == key match, erase magic number
 
-//     i = 0;
-//       if (parse_quote(read_input, key, &i)) {
-//         uart_printstr("\r\nIllegal quote argument");
-//         return ;
-//     }
-//     if (read_input[i] != 0) { // trailling char after quote! unvalid
-//         uart_printstr("\r\nOne argument should be given");
-//         return ;
-//     }
-//     (void)key;
-//     (void)eeprom_data;
-// }
+    for (j = 0 ; j < 33 ; j++) {
+        key[j] = 0;
+    }
+    j = 0;
+    if (parse_quote(read_input, key, &j)) {
+        uart_printstr("\r\nIllegal quote argument");
+        return ;
+    }
+    if (read_input[j] != 0) { // trailling char after quote! unvalid
+        uart_printstr("\r\nOne argument should be given");
+        return ;
+    }
+    i = 0;
+    while (i < 1024) {
+        eeprom_data[i] = eeprom_read(i);
+        if (flag == 1 && eeprom_data[i] != key[j]) {
+            flag = 0;
+        }
+        if (flag == 1 && key[j] == 0 && eeprom_data[i] == 0) {
+            eeprom_write(i - (j + 1), 0xff);// erase magic key -> should be an erase only operation but timeeee
+            break ;
+        }
+        if (eeprom_data[i] == 0xcc) {
+            j = 255;    // will overflow & will be 0 on next loop
+            flag = 1;
+        }
+        ++i;
+        ++j;
+    }
+    if (i == 1024)
+        uart_printstr("Not found\r\n");
+    else 
+        uart_printstr("Done\r\n");
+}
 
 /***************** Read cmd ************************ */
 
@@ -109,12 +138,17 @@ void    forget_cmd(uint8_t* read_input) {
 
 void    read_cmd(uint8_t* read_input) {
     uint8_t     eeprom_data[1025];
-    uint8_t     key[31];    //input size - quote size
-    uint8_t     val[31];    //input size - quote size
+    uint8_t     key[33];    //input size - quote size
+    uint8_t     val[33];    //input size - quote size
     uint16_t    i;
     uint8_t     j;      // pas tres grave s il overflow
     uint8_t     flag = 0;   // 0 == search for magic number ; 1 == compare key ; 2 == write value
 
+    
+    for (j = 0 ; j < 33 ; j++) {
+        key[j] = 0;
+        val[j] = 0;
+    }
     j = 0;
       if (parse_quote(read_input, key, &j)) {
         uart_printstr("\r\nIllegal quote argument");
@@ -128,16 +162,19 @@ void    read_cmd(uint8_t* read_input) {
     while (i < 1024) {
         eeprom_data[i] = eeprom_read(i);
         if (flag == 2) {
+            if (eeprom_data[i] == 0)
+                break ;
             val[j] = eeprom_data[i];
         }
-        if (flag == 1 && !(eeprom_data[i] == key[j])) {
+        if (flag == 1 && eeprom_data[i] != key[j]) {
             flag = 0;
         }
         if (flag == 1 && key[j] == 0 && eeprom_data[i] == 0) {
             flag = 2;
+            j = 255;    // will overflow & will be 0 on next loop
         }
         if (eeprom_data[i] == 0xcc) {
-            j = 0;
+            j = 255;    // will overflow & will be 0 on next loop
             flag = 1;
         }
         ++i;
@@ -163,10 +200,9 @@ uint8_t     ft_strlen(uint8_t *s) {
     return (i);
 }
 
-void    write_to_spot(uint8_t *key, uint8_t *val, uint8_t adrs) {
+void    write_to_spot(uint8_t *key, uint8_t *val, uint16_t adrs) {
     uint8_t i;
     
-    uart_printnbr_8bits(adrs);
     i = 0;
     eeprom_write(adrs++, 0xcc);
     while (key[i]) {
@@ -193,6 +229,9 @@ void    find_a_spot(uint8_t *key, uint8_t *val) {
     uint8_t     flag = 0;   // 0 == search for magic number ; 1 == compare key ; 2 == write value ; 3 == got no\0
                             // 4 == got 1 \0 
     uint8_t     required_space = ft_strlen(key) + ft_strlen(val) + 3; // + 3 -> magical nb, one /0 after key, one /0 after val
+    
+    uint8_t     newflaaaag = 0;
+    uint16_t    writing_addr = 0;
 
     i = 0;
     j = 0;
@@ -206,35 +245,42 @@ void    find_a_spot(uint8_t *key, uint8_t *val) {
             return ;
         }
         if (flag == 4 && eeprom_data[i] == 0)   // we found the second \0, back to searching magic number
-            flag = 0;
+            flag = 5;
         if (flag == 3 && eeprom_data[i] == 0)   // we found the first \0, looking for another
             flag = 4;
         if (eeprom_data[i] == 0xcc) {           // found a magic number, lets looke for key
-            j = 0;
+            j = 255;
             flag = 1;
             space = 0;
         }
-        else if (flag == 0) {                     // no magic number, incrementing space counter
+        else if (newflaaaag == 0 && flag == 0) {                     // no magic number, incrementing space counter
             ++space;
             if (space == required_space) {
-                write_to_spot(key, val, i + 1 - required_space);
-                return ;
+                newflaaaag = 1;
+                writing_addr = i + 1 - required_space;
             }
         }
         ++i;
         ++j;
+        if (flag == 5) {    // not erasing octet 0 this way
+            flag = 0 ;
+        }
+    }
+    if (newflaaaag) {
+        write_to_spot(key, val, writing_addr);
+            return ;
     }
     uart_printstr("No space left");
 }
 
 void    write_cmd(uint8_t* read_input) {
-    uint8_t key[31];    //input size - quote size
-    uint8_t val[31];
+    uint8_t key[33];    //input size - quote size
+    uint8_t val[33];
     uint8_t i;
     uint8_t y;
 
     i = 0;
-    while (i < 31) {
+    while (i < 33) {
         key[i] = 0;
         val[i] = 0;
         ++i;
@@ -259,6 +305,7 @@ void    write_cmd(uint8_t* read_input) {
     uart_printstr((char*)key);
     uart_printstr("\r\nkval: ");
     uart_printstr((char*)val);
+    uart_printstr("\r\n");
     find_a_spot(key, val);
 }
 

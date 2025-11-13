@@ -219,7 +219,7 @@ void    uart_getstr(uint8_t* str)
                 uart_tx(8);     // backspace to move cursor back
             }
         }
-        else if ( i <= 72 &&  // Input size should be smaller then 32
+        else if ( i <= 76 &&  // Input size should be smaller then 32 + quot
                     // Checking no unexpected char are putted
                     (c > 31 && c < 127)) {
             uart_tx(c);
