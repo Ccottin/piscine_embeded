@@ -27,7 +27,7 @@ uint8_t    start_convertion(void) {
 
     // the bit will remain one until the end of the conversion
     while (ADCSRA & (1 << ADSC)) { }
-    // or use an interrupt :) ADCSRA = 1 << ADIE
+    // or use an interrupt :) ADCSRA |=  1 << ADIE
     // Return value read on lower-byte register of the result
     return (ADCH);
 }

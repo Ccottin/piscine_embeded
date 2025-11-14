@@ -180,7 +180,7 @@ char    ft_strcmp(char *s1, char *s2)
 }
 
 uint8_t is_a_valid_char(char c) {
-    uint8_t valid_chars[] = { 'U', 'L', 'R', 'I', 'N', 'O', 'W', 'A', 'B', 'C', 'D', 'E', 'F' \
+    uint8_t valid_chars[] = { 'U', 'L', 'R', 'I', 'N', 'O', 'W', 'A', 'B', 'C', 'D', 'E', 'F', \
                                 '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '#', 0 };
     uint8_t i;
 
@@ -193,7 +193,7 @@ uint8_t is_a_valid_char(char c) {
     return (0);
 }
 
-void    uart_getstr(uint8_t* str)
+void    uart_getstr(char* str)
 {
     int     i;
     char    c;
@@ -202,6 +202,7 @@ void    uart_getstr(uint8_t* str)
     while (42) {
         c = uart_rx();
         if (c == '\r') { // char send by screen when enter is used
+            
             break;
         }
         else if (c == 127)  // delete char command
@@ -213,7 +214,7 @@ void    uart_getstr(uint8_t* str)
                 uart_tx(8);     // backspace to move cursor back
             }
         }
-        else if ( i <= 12 &&  // Input size should be smaller then 32 + quot
+        else if ( i <= 12 &&  // Input size should be smaller then 12
                     (is_a_valid_char(c))) { // Checking no unexpected char are putted
             uart_tx(c);
             str[i] = c;

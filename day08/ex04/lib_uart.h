@@ -14,7 +14,7 @@ char    uart_rx(void);
 
 char    ft_strcmp(char *s1, char *s2);
 
-void    uart_getstr(char* str, char size);
+void    uart_getstr(char* str);
 void    uart_printstr(const char *str);
 
 void    uart_printnbr_8bits(uint8_t nb);

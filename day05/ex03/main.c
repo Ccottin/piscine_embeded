@@ -2,7 +2,7 @@
 #include "lib_uart.h"
 
 int main(void) {
-  uint16_t   c;
+  int16_t   c;
 
     setup_adc(INTERNAL);
     select_source(TEMP);

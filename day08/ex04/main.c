@@ -1,7 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
-#include "lib_adc.h"
 #include "lib_uart.h"
+#include "isr.h"
 
 #define RED (uint8_t[3]) { 0xff, 0x00, 0x00 }
 #define GREEN (uint8_t[]) { 0x00, 0xff, 0x00 }
@@ -23,6 +23,21 @@
     cs  -> pb2
     Miso is not required
 */
+
+volatile uint8_t led_frames[3][4];
+
+
+void    milisecond_counter(void) {
+     // Set CS12 to one, modifying clock select.
+    // Now timer 1 will increment every 8 ticks
+    TCCR1B |= 1 << CS11;
+    // CTC mode ; top will be OCR1A
+    TCCR1A |= 1 << WGM12;
+    // Top value set to be a milisecond -> 16mhz / 64 / 1000
+    OCR1A = 2000;
+    // Enable interrupts on timer 1, then interrupts on CTC match for OCR1a 
+}
+
 
 // code as specified p.172
 void    spi_init(void) {
@@ -67,7 +82,7 @@ void    send_stop_frame(void) {
 }
 
 // Huglyyyyy
-void    send_led_frames(uint8_t (*led_frames)[4]) {
+void    send_led_frames(void) {
         for (uint8_t i = 0; i < 3; i++) {
             for (uint8_t j = 0 ; j < 4; j++) {
                 spi_send(led_frames[i][j]);
@@ -76,22 +91,17 @@ void    send_led_frames(uint8_t (*led_frames)[4]) {
 }
 
 // a frame of led should be : global value, then blue, then green, then red
-void    build_led_frame(uint8_t* frame, uint8_t glob, uint8_t r, uint8_t g, uint8_t b) {
-    frame[0] = 0b11100000 | glob;
-    frame[1] = b;
-    frame[2] = g;
-    frame[3] = r;
+void    build_led_frame(uint8_t index, uint8_t glob, uint8_t r, uint8_t g, uint8_t b) {
+    if (index > 2)
+        return ;
+    led_frames[index][0] = 0b11100000 | glob;
+    led_frames[index][1] = b;
+    led_frames[index][2] = g;
+    led_frames[index][3] = r;
 }
 
-void    build_led_frame_but_macros(uint8_t* frame, uint8_t glob, uint8_t* val) {
-    frame[0] = 0b11100000 | glob;
-    frame[1] = val[2];
-    frame[2] = val[1];
-    frame[3] = val[0];
-}
-
-void    reset_led(uint8_t *led_tab) {
-    build_led_frame(led_tab, 0, 0, 0, 0);
+void    reset_led(uint8_t index) {
+    build_led_frame(index, 0, 0, 0, 0);
 }
 
 // muh
@@ -109,29 +119,28 @@ uint8_t hexa_to_integer(char first, char second) {
     return(first * 16) + second;
 }
 
-void set_rgb(uint8_t r, uint8_t g, uint8_t b)
-{
-    set_duty_cycle_red(r, 30);
-    set_duty_cycle_green(g, 30);
-    set_duty_cycle_blue(b, 30);
-}
-
 void wheel(uint8_t pos)
 {
     pos = 255 - pos;
     if (pos < 85) {
-    set_rgb(255 - pos * 3, 0, pos * 3);
+        for (uint8_t i  = 0 ; i < 3 ; i++) {
+            build_led_frame(i, 0b00001, 255 - pos * 3, 0, pos * 3);
+    }
     } else if (pos < 170) {
-    pos = pos - 85;
-    set_rgb(0, pos * 3, 255 - pos * 3);
+        pos = pos - 85;
+        for (uint8_t i  = 0 ; i < 3 ; i++) {
+            build_led_frame(i, 0b00001, 0, pos * 3, 255 - pos * 3);
+    }
     } else {
-    pos = pos - 170;
-    set_rgb(pos * 3, 255 - pos * 3, 0);
+        pos = pos - 170;
+        for (uint8_t i  = 0 ; i < 3 ; i++) {
+            build_led_frame(i, 0b00001, pos * 3, 255 - pos * 3, 0);
+    }
     }
 }
 
 uint8_t is_hex(char c) {
-    uint8_t hex_chars[] = { 'A', 'B', 'C', 'D', 'E', 'F' \
+    uint8_t hex_chars[] = { 'A', 'B', 'C', 'D', 'E', 'F', \
                         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0 };
     uint8_t i;
 
@@ -145,13 +154,28 @@ uint8_t is_hex(char c) {
 }
 
 
-char    parse_color(char *color_code) {
+void    reset_leds(void) {
+    reset_led(0);
+    reset_led(1);
+    reset_led(2);
+}
+
+
+char    parse_color(char *color_code, uint8_t *magic) {
    
     int     i;
 
     if (ft_strcmp(color_code, "#FULLRAINBOW"))
     {
-        //fullrainbowsetup, return 0
+        // Enable interrupts on timer 1, then interrupts on CTC match for OCR1a 
+        TIMSK1 |= 1 << ICIE1 | 1 << OCIE1A;
+        *magic = 1;
+        return (0);
+    }
+    if (*magic == 1) {
+        TIMSK1 &= ~(1 << ICIE1 | 1 << OCIE1A);
+        reset_leds();
+        *magic = 0;
     }
     if (color_code[0] != '#')
         return (1);
@@ -161,28 +185,48 @@ char    parse_color(char *color_code) {
     }
     if (i != 7)
         return (1);
-    if (color_code[i + 1] != 'D' && color_code[i + 3] != 0) // checking char D and last index
+    if (!color_code[i] || color_code[i] != 'D' || color_code[i + 2] != 0) // checking char D and last index
         return (1);
-    // do a thing to select led accordingly to 6 7 or 8
-        set_duty_cycle_red(hexa_to_integer(color_code[1], color_code[2]), 30);
-    set_duty_cycle_green(hexa_to_integer(color_code[3], color_code[4]), 30);
-    set_duty_cycle_blue(hexa_to_integer(color_code[5], color_code[6]), 30);
-    
+    if (!(color_code[i + 1] == '6' || color_code[i + 1] == '7' || color_code[i + 1] == '8'))
+        return (1);
+    build_led_frame((color_code[i + 1] - 48 - 6), 0b00001, hexa_to_integer(color_code[1], color_code[2]), \
+        hexa_to_integer(color_code[3], color_code[4]), \
+        hexa_to_integer(color_code[5], color_code[6]));
     return (0);
 }
 
-int     main(void) {
-    uint8_t led_frame[3][4];
-    uint8_t percent;
-    uint32_t val;
+FT_ISR(TIMER1_COMPA_vect) {
+    static uint8_t i = 0;
 
+    TIFR1 |= (1 << OCF1A);
+    wheel(i);
+    ++i;
+    send_start_frame();
+    send_led_frames();
+    send_stop_frame();
+}
+
+int     main(void) {
+    char     color_code[13];
+    uint8_t     magic = 0;
+
+    
+    sei();
     spi_init();
     uart_init();
+    milisecond_counter();
+    reset_leds();
     while (42) {
-        uart_getstr(color_code, 9);
-        if (parse_color(color_code))
+        uart_getstr(color_code);
+        if (parse_color(color_code, &magic))
             uart_printstr(" X Invalid input.\r\n");
         else
+        {
+            send_start_frame();
+            send_led_frames();
+            send_stop_frame();
             uart_printstr(" -> Done.\r\n");
+            
+        }
     }
 }
