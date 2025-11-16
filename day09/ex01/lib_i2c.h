@@ -10,9 +10,15 @@
 
 // https://assets.nexperia.com/documents/data-sheet/PCA9555.pdf
 # define EXP_ADR 0b0100000
-// found page 6
+// found page 5
 # define CONFIG_PORT0 0x06
-# define OUPUT_PORT0 0x02
+# define OUPUT_PORT0  0x02
+# define INPUT_PORT0  0x00
+
+# define D9_ON   0b11110111
+# define D10_ON  0b11111011
+# define D11_ON  0b11111101
+# define DX_OFF  0b11111111
 
 # define LEDS_OUTPUT 0b11110001
 

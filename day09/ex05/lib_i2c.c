@@ -102,6 +102,6 @@ void    i2c_multiwrite(uint8_t *data, uint8_t size) {
 
 void    i2c_multiread(uint8_t *data, uint8_t size) {
         for (int i = 0; i < size; i++) {
-        data[i] = i2c_read_and_return();
+        data[i] = i2c_read();
     }
 }

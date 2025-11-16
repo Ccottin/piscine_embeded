@@ -38,7 +38,7 @@ void    milisecond_counter(void) {
     TIMSK1 |= 1 << ICIE1 | 1 << OCIE1A;
 }
 
-ISR(TIMER1_COMPA_vect) {
+FT_ISR(TIMER1_COMPA_vect) {
     ++time_counter;
     if (time_counter == 255)
         PORTB ^= 1 << PORTB0;
